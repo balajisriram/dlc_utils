@@ -7,6 +7,9 @@ from scipy.ndimage import median_filter as medfilt
 def euclidean_dist(p1,p2):
     return np.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
 
+def amplitude(v):
+    return np.sqrt(v[0]**2+v[1]**2)
+
 def is_odd(num):
    return num % 2 != 0
    
@@ -14,6 +17,10 @@ def get_all_videos_in_session(folder):
     videos = [f.split('.',1)[0] for f in os.listdir(folder) if f.endswith('avi')]
     returned_list = sorted(videos,key=lambda e: int(e[8:]))
     return returned_list
+    
+def angle_between(v1,v2):
+    cos_ang = (v1[0]*v2[0]+v1[1]*v2[1])/(amplitude(v1)*amplitude(v2))
+    return np.degrees(np.arccos(cos_ang))
 
 def get_body_length(df, p_cutoff=0.95,strategy='median_filter',frame_rate=20.0):
     resnet_name = df.keys()[0][0]
