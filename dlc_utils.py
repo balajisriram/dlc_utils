@@ -22,6 +22,19 @@ def angle_between(v1,v2):
     cos_ang = (v1[0]*v2[0]+v1[1]*v2[1])/(amplitude(v1)*amplitude(v2))
     return np.degrees(np.arccos(cos_ang))
 
+def load_session_details(loc = r'C:\Users\User\Desktop\Code\dlc_utils\SIandNOR_details.csv'):
+    data = pd.read_csv(loc)
+    data = data.set_index('id')
+    return data
+
+def get_subject_from_session(sess):
+    splits = sess.split('_')
+    sub = splits[0]
+    for split in splits[1:-1]:
+        sub = sub+'_'
+        sub = sub+split
+    return sub
+    
 def get_body_length(df, p_cutoff=0.95,strategy='median_filter',frame_rate=20.0):
     resnet_name = df.keys()[0][0]
     centroid_x = df[(resnet_name,'centroid','x')]
@@ -84,7 +97,7 @@ def get_analysis_dfs(folder,vids):
         else: full_df = full_df.append(df,ignore_index=True)
     return full_df
 
-def plot_centroid(df,bodypart='centroid',p_cutoff = 0.95,strategy='remove_uncertain'):
+def plot_centroid(df,bodypart='centroid',p_cutoff = 0.95,strategy='remove_uncertain',linewidth=0.5,time_filter=None,frame_rate=20.0):
     resnet_name = df.keys()[0][0]
     x = df[resnet_name,bodypart,'x']
     y = df[resnet_name,bodypart,'y']
@@ -92,7 +105,10 @@ def plot_centroid(df,bodypart='centroid',p_cutoff = 0.95,strategy='remove_uncert
     
     good_x = x[p>p_cutoff]
     good_y = y[p>p_cutoff]
-    plt.plot(good_x,good_y,'k')
+    if time_filter:
+        good_x = good_x[:int(time_filter*frame_rate)]
+        good_y = good_y[:int(time_filter*frame_rate)]
+    plt.plot(good_x,-good_y,'k',linewidth=linewidth)
     plt.axis('equal')
     plt.show()
     
@@ -113,10 +129,10 @@ def plot_pos_vs_frame(df,bodypart='centroid',p_cutoff = 0.95,strategy='remove_un
     
     
 if __name__=='__main__':
-    folder = r'Y:\Data 2018-2019\Complement 4 - schizophrenia Project\2019 Adult Behavior C4_for revisions\NOR\ALC_050319_1_control\ALC_050319_1_41C_NOR\ALC_050319_1_41C_NOR_Trial2'
+    folder = r'Y:\Data 2018-2019\Complement 4 - schizophrenia Project\2019 Adult Behavior C4_for revisions\NOR\ALC_051719_2_mC4\ALC_051719_2_53B_NOR\ALC_051719_2_53B_NOR_Trial1'
     vids = get_all_videos_in_session(folder)
     df = get_analysis_dfs(folder,vids)
     # import pdb
     
     # pdb.set_trace()
-    plot_centroid(df)
+    plot_centroid(df,linewidth=0.25,time_filter=300)

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.path import Path
 
-from dlc_utils import get_all_videos_in_session,get_analysis_dfs,plot_pos_vs_frame
+from dlc_utils import get_all_videos_in_session,get_analysis_dfs,plot_pos_vs_frame,load_session_details
 
 def get_object_locations(df,fractional_size=0.33):
     resnet_name = df.keys()[0][0]
@@ -115,11 +115,6 @@ def get_occupancy(df,bodypart='centroid',p_cutoff = 0.95,strategy='remove_uncert
     if plot_on: ax.axis('equal')
     if plot_on: plt.show()
     return bl_occupancy,tr_occupancy
-
-def load_session_details(loc = r'C:\Users\User\Desktop\Code\C4_behavior_utils\SIandNOR_details.csv'):
-    data = pd.read_csv(loc)
-    data = data.set_index('id')
-    return data
 
 def get_subject_from_session(sess):
     splits = sess.split('_')
