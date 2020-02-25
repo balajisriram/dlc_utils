@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from dlc_utils import get_all_videos_in_session,get_analysis_dfs,euclidean_dist,is_odd,load_session_details,get_subject_from_session
 from scipy.ndimage import median_filter as medfilt
 
-def get_animal_speed(df,bodypart='centroid',p_cutoff=0.95,strategy='raw',frame_rate=20.0,arena_s1ze_in_mm=450,time_filter=None):
+def get_animal_speed(df,bodypart='centroid',p_cutoff=0.95,strategy='raw',frame_rate=20.0,arena_size_in_mm=450,time_filter=None):
     resnet_name = df.keys()[0][0]
     
     t_l_corner = np.asarray([df[resnet_name,'box_tl','x'].mean(),-df[resnet_name,'box_tl','y'].mean()])
@@ -55,7 +55,7 @@ def get_animal_speed(df,bodypart='centroid',p_cutoff=0.95,strategy='raw',frame_r
         body_speed = medfilt(body_speed,size=filter_dur_in_frames)
         body_speed[body_speed>np.nanquantile(body_speed,0.999)] = np.nan
     # body_speed is in delta(pix)/frame. Convert to delta(mm)/s        
-    body_speed = body_speed*(arena_s1ze_in_mm/arena_length_in_pix)*frame_rate
+    body_speed = body_speed*(arena_size_in_mm/arena_length_in_pix)*frame_rate
     return body_speed
 
 
