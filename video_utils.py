@@ -41,11 +41,14 @@ def filter_from_df(df, p_cutoff=0.95, smoothing=('raw',np.nan), features=('centr
     return output
 
 
-def annotate_video(video=r'C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B.avi',analysis=r'C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B.analysis',
-    output=r"C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B_annotated.avi",speedX=1,):
+def annotate_video(video=r'C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B.avi',
+                   analysis=r'C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B.analysis',
+                   output=r"C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B_annotated.avi",
+                   speedX=1,points=('centroid','l_ear','r_ear','snout','box_tl','box_tr','box_br','box_bl'),
+                   skeleton=[('centroid','snout'),('l_ear','r_ear'),('box_tl','box_tr'),('box_tr','box_br'),('box_br','box_bl'),('box_bl','box_tl')]):
     
     df = pd.read_pickle(analysis)
-    out = filter_from_df(df) # points=('centroid','l_ear','r_ear')
+    out = filter_from_df(df,features=points) # points=('centroid','l_ear','r_ear')
     
     
     # import pdb; pdb.set_trace()
@@ -59,13 +62,26 @@ def annotate_video(video=r'C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B.avi',
             # get the frame
             cap.set(1,idx) # 1==set frame number
             succ,img = cap.read()
+            
+            # plot the skeleton
             # draw the object circles
-            if not np.isnan(out['centroid']['x'][idx]):
-                img = cv2.circle(img,(int(out['centroid']['x'][idx]),int(out['centroid']['y'][idx])),5,(0,0,255))
-            if not np.isnan(out['l_ear']['x'][idx]):
-                img = cv2.circle(img,(int(out['l_ear']['x'][idx]),int(out['l_ear']['y'][idx])),5,(0,0,255))
-            if not np.isnan(out['r_ear']['x'][idx]):
-                img = cv2.circle(img,(int(out['r_ear']['x'][idx]),int(out['r_ear']['y'][idx])),5,(0,0,255))
+            for bone in skeleton:
+                bone_edge1 = bone[0]
+                bone_edge2 = bone[1]
+                if not np.isnan(out[bone_edge1]['x'][idx]) and not np.isnan(out[bone_edge2]['x'][idx]):
+                    # import pdb;
+                    # pdb.set_trace()
+                    p1 = (int(out[bone_edge1]['x'][idx]),int(out[bone_edge1]['y'][idx]))
+                    p2 = (int(out[bone_edge2]['x'][idx]),int(out[bone_edge2]['y'][idx]))
+                    
+                    img = cv2.line(img,p1,p2,(0,0,255),2)
+            
+            # if not np.isnan(out['centroid']['x'][idx]):
+                # img = cv2.circle(img,(int(out['centroid']['x'][idx]),int(out['centroid']['y'][idx])),5,(0,0,255))
+            # if not np.isnan(out['l_ear']['x'][idx]):
+                # img = cv2.circle(img,(int(out['l_ear']['x'][idx]),int(out['l_ear']['y'][idx])),5,(0,0,255))
+            # if not np.isnan(out['r_ear']['x'][idx]):
+                # img = cv2.circle(img,(int(out['r_ear']['x'][idx]),int(out['r_ear']['y'][idx])),5,(0,0,255))
             
             # add to writer
             writer.write(img)
