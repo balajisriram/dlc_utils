@@ -2,6 +2,7 @@ import cv2
 import tqdm
 import collections
 import sys
+import os
 import pandas as pd
 import numpy as np
 from scipy.ndimage import median_filter as medfilt
@@ -41,13 +42,24 @@ def filter_from_df(df, p_cutoff=0.95, smoothing=('raw',np.nan), features=('centr
     return output
 
 
-def annotate_video(video=r'C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B.avi',
-                   analysis=r'C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B.analysis',
-                   output=r"C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B_annotated.avi",
-                   speedX=1,points=('centroid','l_ear','r_ear','snout','box_tl','box_tr','box_br','box_bl'),
+def annotate_video(base=r'C:\Users\balaji\Desktop\ALC_OF',video_file='ALC_050319_1_41B.avi',analysis_file='ALC_050319_1_41B.analysis',
+                   output_file='ALC_050319_1_41B_annotated.avi',speedX=1,
                    skeleton=[('centroid','snout'),('l_ear','r_ear'),('box_tl','box_tr'),('box_tr','box_br'),('box_br','box_bl'),('box_bl','box_tl')]):
     
+    analysis = os.path.join(base,analysis_file)
+    video = os.path.join(base,video_file)
+    output = os.path.join(base,output_file)
+    
+    
+    # get the analysis
     df = pd.read_pickle(analysis)
+    
+    # get points of interest
+    points = set()
+    for bone in skeleton:
+        points = points.union({*bone})
+    print(points)
+    
     out = filter_from_df(df,features=points) # points=('centroid','l_ear','r_ear')
     
     
@@ -69,8 +81,6 @@ def annotate_video(video=r'C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B.avi',
                 bone_edge1 = bone[0]
                 bone_edge2 = bone[1]
                 if not np.isnan(out[bone_edge1]['x'][idx]) and not np.isnan(out[bone_edge2]['x'][idx]):
-                    # import pdb;
-                    # pdb.set_trace()
                     p1 = (int(out[bone_edge1]['x'][idx]),int(out[bone_edge1]['y'][idx]))
                     p2 = (int(out[bone_edge2]['x'][idx]),int(out[bone_edge2]['y'][idx]))
                     
@@ -95,7 +105,6 @@ def annotate_video(video=r'C:\Users\balaji\Desktop\ALC_OF\ALC_050319_1_41B.avi',
         cv2.destroyAllWindows()
         
 if __name__=='__main__':
-    annotate_video(video=r'C:\Users\bsriram\Desktop\Data\ACM_Data\OpenField\ALC_050319_1_41B_OF.avi',
-        analysis=r'C:\Users\bsriram\Desktop\Data\ACM_Data\OpenField\ALC_050319_1_41B_OF.analysis',
-        output=r'C:\Users\bsriram\Desktop\Data\ACM_Data\OpenField\ALC_050319_1_41B_OF_annotated.avi',
-        speedX=3)
+    base = r'C:\Users\bsriram\Desktop\Data\ACM_Data\OpenField'
+    annotate_video(base = base,video_file='ALC_050319_1_41B_OF.avi', analysis_file='ALC_050319_1_41B_OF.analysis',
+                   output_file='ALC_050319_1_41B_OF_annotated.avi',speedX=3)
