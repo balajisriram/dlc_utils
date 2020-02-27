@@ -18,9 +18,10 @@ def get_all_videos_in_session(folder):
     returned_list = sorted(videos,key=lambda e: int(e[8:]))
     return returned_list
     
-def angle_between(v1,v2):
+def angle_between(v1,v2,type='degrees'):
     cos_ang = (v1[0]*v2[0]+v1[1]*v2[1])/(amplitude(v1)*amplitude(v2))
-    return np.degrees(np.arccos(cos_ang))
+    if type=='degrees':return np.degrees(np.arccos(cos_ang))
+    elif type=='radians':return np.arccos(cos_ang)
 
 def load_session_details(loc = r'C:\Users\User\Desktop\Code\dlc_utils\SIandNOR_details.csv'):
     data = pd.read_csv(loc)
