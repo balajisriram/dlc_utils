@@ -133,8 +133,15 @@ def annotate_extra(base=r'C:\Users\balaji\Desktop\ALC_OF',video_file='ALC_050319
                 snout = [int(out['snout']['x'][idx]),int(out['snout']['y'][idx])]
                 
                 centroid2snout = [snout[0]-centroid[0],snout[1]-centroid[1]]
-                veridical = [1.,0.]
-                angle_from_veridical = -1*angle_between(centroid2snout,veridical,type='radians')
+                veridical1 = [0.,1.]
+                veridical2 = [1.,0.]
+                angle_from_veridical1 = angle_between(centroid2snout,veridical1,type='radians')
+                angle_from_veridical2 = angle_between(centroid2snout,veridical2,type='radians')
+                
+                if angle_from_veridical2>(np.pi/2):
+                    angle_from_veridical = 2*np.pi-angle_from_veridical1
+                else:
+                    angle_from_veridical = angle_from_veridical1
                 ROTATION_MATRIX = np.asarray([[np.cos(angle_from_veridical), -np.sin(angle_from_veridical)],[np.sin(angle_from_veridical),np.cos(angle_from_veridical)]])
                 
                 for bone in skeleton:
@@ -149,6 +156,9 @@ def annotate_extra(base=r'C:\Users\balaji\Desktop\ALC_OF',video_file='ALC_050319
                         p1_final = (int(p1_rot[0].astype(int)+img_size[0]+100),int(p1_rot[1].astype(int)+img_size[1]/2))
                         p2_final = (int(p2_rot[0].astype(int)+img_size[0]+100),int(p2_rot[1].astype(int)+img_size[1]/2))
                         img2 = cv2.line(img2,p1_final,p2_final,(0,0,255),2)
+                                
+                text_pos = (int(img_size[0]+100),int(img_size[1]/4))
+                img2 = cv2.putText(img2,'{0:2.0f}'.format(np.rad2deg(angle_from_veridical)),text_pos,cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),1)
             # if idx%1000==0:
                 # import matplotlib.pyplot as plt
                 # plt.imshow(img2[:,:,2]);plt.show()
