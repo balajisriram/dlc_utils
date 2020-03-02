@@ -42,7 +42,6 @@ def filter_from_df(df, p_cutoff=0.95, smoothing=('raw',np.nan), features=('centr
         output[feature] = feature_details
     return output
 
-
 def annotate_video_basic(base=r'C:\Users\balaji\Desktop\ALC_OF',video_file='ALC_050319_1_41B.avi',analysis_file='ALC_050319_1_41B.analysis',
                    output_file='ALC_050319_1_41B_annotated.avi',speedX=1,
                    skeleton=[('centroid','snout'),('centroid','tail_base'),('l_ear','r_ear'),('box_tl','box_tr'),('box_tr','box_br'),('box_br','box_bl'),('box_bl','box_tl')]):
@@ -139,9 +138,9 @@ def annotate_extra(base=r'C:\Users\balaji\Desktop\ALC_OF',video_file='ALC_050319
                 angle_from_veridical2 = angle_between(centroid2snout,veridical2,type='radians')
                 
                 if angle_from_veridical2>(np.pi/2):
-                    angle_from_veridical = 2*np.pi-angle_from_veridical1
+                    angle_from_veridical = 3*np.pi-angle_from_veridical1
                 else:
-                    angle_from_veridical = angle_from_veridical1
+                    angle_from_veridical = angle_from_veridical1 + np.pi
                 ROTATION_MATRIX = np.asarray([[np.cos(angle_from_veridical), -np.sin(angle_from_veridical)],[np.sin(angle_from_veridical),np.cos(angle_from_veridical)]])
                 
                 for bone in skeleton:
@@ -177,7 +176,23 @@ def annotate_extra(base=r'C:\Users\balaji\Desktop\ALC_OF',video_file='ALC_050319
         
 if __name__=='__main__':
     base = r'C:\Users\bsriram\Desktop\Data\ACM_Data\OpenField'
-    annotate_video_basic(base = base,video_file='ALC_050319_1_41B_OF.avi', analysis_file='ALC_050319_1_41B_OF.analysis',
-                   output_file='ALC_050319_1_41B_OF_annotated.avi',speedX=1)
-    annotate_extra(base = base,video_file='ALC_050319_1_41B_OF_annotated.avi', analysis_file='ALC_050319_1_41B_OF.analysis',
-                   output_file='ALC_050319_1_41B_OF_annotated_skeletonAligned.avi',speedX=1)
+    
+    files = ['ALC_050319_1_41B','ALC_050319_1_41B_OF','ALC_050319_1_41C','ALC_050319_1_41R','ALC_050319_1_42B','ALC_050319_1_42C','ALC_050319_1_42R','ALC_050319_1_43B',
+             'ALC_050319_1_43C','ALC_050319_1_43G','ALC_050319_1_43R','ALC_050319_2_44B','ALC_050319_2_44C','ALC_050319_2_44R','ALC_050319_2_45B','ALC_050319_2_45R',
+             'ALC_050319_2_46B','ALC_050319_2_46C','ALC_050319_2_46R','ALC_051719_1_42Bk','ALC_051719_1_42G','ALC_051719_1_45Bk','ALC_051719_1_45C','ALC_051719_2_53B',
+             'ALC_051719_2_53C','ALC_051719_2_53G','ALC_051719_2_53R','ALC_051719_2_54B','ALC_051719_2_54C','ALC_051719_2_54R','ALC_051719_2_55B','ALC_051719_2_55C',
+             'ALC_051719_2_55R','ALC_060519_1_49B','ALC_060519_1_49C','ALC_060519_1_49R','ALC_060519_2_48B','ALC_060519_2_48C','ALC_060519_2_48R','ALC_060519_2_57B',
+             'ALC_060519_2_57C','ALC_060519_2_57G','ALC_060519_2_57R','ALC_060519_2_58B','ALC_060519_2_58C','ALC_060519_2_58R','ALC_070519_1_21B','ALC_070519_1_21C',
+             'ALC_070519_1_21R','ALC_070519_1_31B','ALC_070519_1_31C','ALC_070519_1_31R','ALC_070519_1_60B','ALC_070519_1_60C','ALC_070519_1_60G','ALC_070519_1_60R']
+    # files = ['ALC_050319_1_41B','ALC_050319_1_41B_OF','ALC_050319_1_41C','ALC_050319_1_41R','ALC_050319_1_42B','ALC_050319_1_42C','ALC_050319_1_42R','ALC_050319_1_43B']
+    for file in files:
+        print('Running analysis for '+ file)
+        video_file = file+'.avi'
+        analysis_file = file+'.analysis'
+        output_file = file+'_annotated.avi'
+        annotate_video_basic(base=base,video_file=video_file,analysis_file=analysis_file,output_file=output_file,speedX=1)
+        
+        video_file = file+'_annotated.avi'
+        analysis_file = file+'.analysis'
+        output_file = file+'_annotated_skeletonAligned.avi'
+        annotate_extra(base=base,video_file=video_file,analysis_file=analysis_file,output_file=output_file,speedX=1)
