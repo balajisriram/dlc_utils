@@ -20,9 +20,9 @@ def filter_from_df(df, p_cutoff=0.95, smoothing=('raw',np.nan), features=('centr
         feature_p = df[(resnet_name,feature,'likelihood')]
         
         # remove the unreliable
-        feature_x[feature_p<p_cutoff] = np.nan
-        feature_y[feature_p<p_cutoff] = np.nan
-        
+        feature_x.loc[feature_p<p_cutoff] = np.nan
+        feature_y.loc[feature_p<p_cutoff] = np.nan
+
         # smoothing
         if smoothing[0]=='raw':
             # do nothing to the distance
@@ -41,6 +41,48 @@ def filter_from_df(df, p_cutoff=0.95, smoothing=('raw',np.nan), features=('centr
         feature_details['y'] = feature_y
         output[feature] = feature_details
     return output
+
+def get_rotated_coordinates(df,p_cutoff=0.95,points=['centroid','snout','tail_base','l_ear','r_ear'],zero_to='centroid',align_to='snout'):
+    resnet_name = df.keys()[0][0]
+    rotated_values = dict()
+    for point in points:
+        rotated_values[point]['x'] = []
+        rotated_values[point]['y'] = []
+        
+    for idx,row in tqdm.tqdm(df.iterrows(),total=df.shape[0]):
+        zero_coord=(df[(resnet_name,zero_to,'x')][idx],df[(resnet_name,zero_to,'y')][idx])
+        zero_p = df[(resnet_name,zero_to,'likelihood')][idx]
+        align_coord=(df[(resnet_name,align_to,'x')][idx],df[(resnet_name,align_to,'y')][idx])
+        align_p = df[(resnet_name,align_to,'likelihood')][idx]
+        
+        if zero_p<p_cutoff or align_p<p_cutoff: # no point in aligning if the point is unreliable
+            for point in points:
+                rotated_values[point]['x'].append(np.nan)
+                rotated_values[point]['y'].append(np.nan)
+            continue
+        # there is something to align    
+        zero2align = (align_coord[0]-zero_coord[0],align_coord[1]-zero_coord[1])
+        veridical1 = [0.,1.]
+        veridical2 = [1.,0.]
+        angle_from_veridical1 = angle_between(zero2align,veridical1,type='radians')
+        angle_from_veridical2 = angle_between(zero2align,veridical2,type='radians')
+        
+        if angle_from_veridical2>(np.pi/2):
+            angle_from_veridical = 3*np.pi-angle_from_veridical1
+        else:
+            angle_from_veridical = angle_from_veridical1 + np.pi
+        ROTATION_MATRIX = np.asarray([[np.cos(angle_from_veridical), -np.sin(angle_from_veridical)],[np.sin(angle_from_veridical),np.cos(angle_from_veridical)]])
+        
+        for point in points:
+            if df[(resnet_name,point,'likelihood')][idx]>p_cutoff:
+                p1 = np.asarray([df[(resnet_name,point,'x')][idx]-zero_coord[0],df[(resnet_name,point,'y')][idx]-zero_coord[1]]) # zero out the points
+                p1_rot = np.matmul(ROTATION_MATRIX,np.transpose(p1))
+                rotated_values[point]['x'].append(p1_rot[0])
+                rotated_values[point]['y'].append(p1_rot[1])
+            else:
+                rotated_values[point]['x'].append(np.nan)
+                rotated_values[point]['y'].append(np.nan)
+
 
 def annotate_video_basic(base=r'C:\Users\balaji\Desktop\ALC_OF',video_file='ALC_050319_1_41B.avi',analysis_file='ALC_050319_1_41B.analysis',
                    output_file='ALC_050319_1_41B_annotated.avi',speedX=1,
@@ -94,8 +136,7 @@ def annotate_video_basic(base=r'C:\Users\balaji\Desktop\ALC_OF',video_file='ALC_
         cv2.destroyAllWindows()
 
 def annotate_extra(base=r'C:\Users\balaji\Desktop\ALC_OF',video_file='ALC_050319_1_41B_annotated.avi',analysis_file='ALC_050319_1_41B.analysis',
-                   output_file='ALC_050319_1_41B_annotated_skeletonAligned.avi',speedX=1,
-                   skeleton=[('centroid','snout'),('centroid','tail_base'),('l_ear','r_ear')]):
+                   output_file='ALC_050319_1_41B_annotated_skeletonAligned.avi',speedX=1,skeleton=[('centroid','snout'),('centroid','tail_base'),('l_ear','r_ear')]):
     
     analysis = os.path.join(base,analysis_file)
     video = os.path.join(base,video_file)
@@ -177,14 +218,14 @@ def annotate_extra(base=r'C:\Users\balaji\Desktop\ALC_OF',video_file='ALC_050319
 if __name__=='__main__':
     base = r'C:\Users\bsriram\Desktop\Data\ACM_Data\OpenField'
     
-    files = ['ALC_050319_1_41B','ALC_050319_1_41B_OF','ALC_050319_1_41C','ALC_050319_1_41R','ALC_050319_1_42B','ALC_050319_1_42C','ALC_050319_1_42R','ALC_050319_1_43B',
-             'ALC_050319_1_43C','ALC_050319_1_43G','ALC_050319_1_43R','ALC_050319_2_44B','ALC_050319_2_44C','ALC_050319_2_44R','ALC_050319_2_45B','ALC_050319_2_45R',
-             'ALC_050319_2_46B','ALC_050319_2_46C','ALC_050319_2_46R','ALC_051719_1_42Bk','ALC_051719_1_42G','ALC_051719_1_45Bk','ALC_051719_1_45C','ALC_051719_2_53B',
-             'ALC_051719_2_53C','ALC_051719_2_53G','ALC_051719_2_53R','ALC_051719_2_54B','ALC_051719_2_54C','ALC_051719_2_54R','ALC_051719_2_55B','ALC_051719_2_55C',
-             'ALC_051719_2_55R','ALC_060519_1_49B','ALC_060519_1_49C','ALC_060519_1_49R','ALC_060519_2_48B','ALC_060519_2_48C','ALC_060519_2_48R','ALC_060519_2_57B',
-             'ALC_060519_2_57C','ALC_060519_2_57G','ALC_060519_2_57R','ALC_060519_2_58B','ALC_060519_2_58C','ALC_060519_2_58R','ALC_070519_1_21B','ALC_070519_1_21C',
-             'ALC_070519_1_21R','ALC_070519_1_31B','ALC_070519_1_31C','ALC_070519_1_31R','ALC_070519_1_60B','ALC_070519_1_60C','ALC_070519_1_60G','ALC_070519_1_60R']
-    # files = ['ALC_050319_1_41B','ALC_050319_1_41B_OF','ALC_050319_1_41C','ALC_050319_1_41R','ALC_050319_1_42B','ALC_050319_1_42C','ALC_050319_1_42R','ALC_050319_1_43B']
+    # files = ['ALC_050319_1_41B','ALC_050319_1_41B_OF','ALC_050319_1_41C','ALC_050319_1_41R','ALC_050319_1_42B','ALC_050319_1_42C','ALC_050319_1_42R','ALC_050319_1_43B',
+             # 'ALC_050319_1_43C','ALC_050319_1_43G','ALC_050319_1_43R','ALC_050319_2_44B','ALC_050319_2_44C','ALC_050319_2_44R','ALC_050319_2_45B','ALC_050319_2_45R',
+             # 'ALC_050319_2_46B','ALC_050319_2_46C','ALC_050319_2_46R','ALC_051719_1_42Bk','ALC_051719_1_42G','ALC_051719_1_45Bk','ALC_051719_1_45C','ALC_051719_2_53B',
+             # 'ALC_051719_2_53C','ALC_051719_2_53G','ALC_051719_2_53R','ALC_051719_2_54B','ALC_051719_2_54C','ALC_051719_2_54R','ALC_051719_2_55B','ALC_051719_2_55C',
+             # 'ALC_051719_2_55R','ALC_060519_1_49B','ALC_060519_1_49C','ALC_060519_1_49R','ALC_060519_2_48B','ALC_060519_2_48C','ALC_060519_2_48R','ALC_060519_2_57B',
+             # 'ALC_060519_2_57C','ALC_060519_2_57G','ALC_060519_2_57R','ALC_060519_2_58B','ALC_060519_2_58C','ALC_060519_2_58R','ALC_070519_1_21B','ALC_070519_1_21C',
+             # 'ALC_070519_1_21R','ALC_070519_1_31B','ALC_070519_1_31C','ALC_070519_1_31R','ALC_070519_1_60B','ALC_070519_1_60C','ALC_070519_1_60G','ALC_070519_1_60R']
+    files = ['ALC_050319_1_41B',]
     for file in files:
         print('Running analysis for '+ file)
         video_file = file+'.avi'
