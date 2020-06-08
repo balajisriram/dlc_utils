@@ -3,6 +3,8 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 from scipy.ndimage import median_filter as medfilt
+import cv2 
+import sys
 
 def euclidean_dist(p1,p2):
     return np.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
@@ -128,12 +130,62 @@ def plot_pos_vs_frame(df,bodypart='centroid',p_cutoff = 0.95,strategy='remove_un
     plt.legend(['x','y'])
     plt.show()
     
-    
+def compress_video(inp,out):
+    try:
+        cap = cv2.VideoCapture(inp)
+        fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+        writer = cv2.VideoWriter(out,fourcc, int(1/cap.get(2)),(int(cap.get(3)),int(cap.get(4))))
+        while True:
+            succ,img = cap.read()
+            if not succ: break
+            writer.write(img)
+    except Exception as er:
+        raise er.with_traceback(sys.exc_info()[2])
+    finally:
+        # for index, row in df.iterrows():
+        cap.release()
+        writer.release()
+        cv2.destroyAllWindows()
+
+def combine_videos(inps,out):
+    try:
+        cap = cv2.VideoCapture(inps[0]) # get date from the first video
+        print(inps)
+        #print(int(1/cap.get(2)))
+        print(int(cap.get(3)))
+        print(int(cap.get(4)))
+        
+        fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+        writer = cv2.VideoWriter(out,fourcc, int(1/cap.get(2)),(int(cap.get(3)),int(cap.get(4))))
+        for inp in inps:
+            cap.release()
+            cap = cv2.VideoCapture(inp)
+            while True:
+                succ,img = cap.read()
+                if not succ: break
+                writer.write(img)
+            print(inp)
+    except Exception as er:
+        raise er.with_traceback(sys.exc_info()[2])
+    finally:
+        # for index, row in df.iterrows():
+        cap.release()
+        writer.release()
+        cv2.destroyAllWindows()
+
 if __name__=='__main__':
-    folder = r'Y:\Data 2018-2019\Complement 4 - schizophrenia Project\2019 Adult Behavior C4_for revisions\NOR\ALC_051719_2_mC4\ALC_051719_2_53B_NOR\ALC_051719_2_53B_NOR_Trial1'
-    vids = get_all_videos_in_session(folder)
-    df = get_analysis_dfs(folder,vids)
+    folder = r'C:\Data\SocialBehavior\orig'
+    vids =  get_all_videos_in_session(folder)
+    
+    vids_path = [os.path.join(folder,v+'.avi') for v in vids]
+    out = os.path.join(folder,'behavCam.avi')
+    
+    # for vid in vids:
+        # compress_video(os.path.join(folder,vid+'.avi'),os.path.join(folder,vid+'_compressed.avi'))
+        
+    combine_videos(vids_path,out)
+    # df = get_analysis_dfs(folder,vids)
     # import pdb
     
     # pdb.set_trace()
-    plot_centroid(df,linewidth=0.25,time_filter=300)
+    # plot_centroid(df,linewidth=0.25,time_filter=300)
